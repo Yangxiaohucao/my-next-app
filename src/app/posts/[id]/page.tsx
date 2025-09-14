@@ -1,45 +1,39 @@
-// src/app/posts/[id]/page.tsx
 import { notFound } from "next/navigation";
-import type { Metadata } from "next";
 
-type Props = {
-  params: { id: string };
-};
+type Props = { params: { id: string }; searchParams: { tab?: string } };
 
-type Post = {
-  id: number;
-  title: string;
-  body: string;
-};
-
-// Fetch single post
-async function getPost(id: string): Promise<Post | null> {
+export default async function PostPage({ params, searchParams }: Props) {
+  const tab = searchParams.tab ?? "content";
   const res = await fetch(
-    `${process.env.NEXT_PUBLIC_BASE_URL ?? ""}/api/posts/${id}`,
+    `${process.env.NEXT_PUBLIC_BASE_URL ?? ""}/api/posts/${params.id}`,
     { next: { revalidate: 60 } }
   );
-
-  if (!res.ok) return null;
-
-  return res.json();
-}
-
-// Metadata (dynamic <title>)
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const post = await getPost(params.id);
-  if (!post) return { title: "Post Not Found" };
-  return { title: post.title };
-}
-
-export default async function PostPage({ params }: Props) {
-  const post = await getPost(params.id);
-
-  if (!post) notFound();
+  if (!res.ok) notFound();
+  const post = await res.json();
 
   return (
     <main className="max-w-3xl mx-auto p-6 space-y-4">
-      <h1 className="text-3xl font-bold">{post!.title}</h1>
-      <article className="prose">{post!.body}</article>
+      <h1 className="text-3xl font-bold">{post.title}</h1>
+
+      <nav className="flex gap-3">
+        <a
+          className={tab === "content" ? "underline" : ""}
+          href={`?tab=content`}
+        >
+          Content
+        </a>
+        <a className={tab === "meta" ? "underline" : ""} href={`?tab=meta`}>
+          Meta
+        </a>
+      </nav>
+
+      {tab === "content" ? (
+        <article className="prose">{post.body}</article>
+      ) : (
+        <pre className="bg-gray-100 p-3 rounded text-sm overflow-auto">
+          {JSON.stringify(post, null, 2)}
+        </pre>
+      )}
     </main>
   );
 }
