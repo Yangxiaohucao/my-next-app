@@ -15,8 +15,8 @@ type Post = {
 // Fetch single post
 async function getPost(id: string): Promise<Post | null> {
   const res = await fetch(
-    `https://jsonplaceholder.typicode.com/posts/${id}`,
-    { next: { revalidate: 60 } } // ISR
+    `${process.env.NEXT_PUBLIC_BASE_URL ?? ""}/api/posts/${id}`,
+    { next: { revalidate: 60 } }
   );
 
   if (!res.ok) return null;
